@@ -1,0 +1,28 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Sort",
+      "Parallel Aware": false,
+      "Startup Cost": 21388.52,
+      "Total Cost": 21388.53,
+      "Plan Rows": 5,
+      "Plan Width": 30,
+      "Sort Key": ["o.created_at DESC"],
+      "Plans": [
+        {
+          "Node Type": "Seq Scan",
+          "Parent Relationship": "Outer",
+          "Parallel Aware": false,
+          "Relation Name": "orders",
+          "Schema": "shop",
+          "Alias": "o",
+          "Startup Cost": 0.00,
+          "Total Cost": 21388.46,
+          "Plan Rows": 5,
+          "Plan Width": 30,
+          "Filter": "(o.customer_id = 42)"
+        }
+      ]
+    }
+  }
+]
