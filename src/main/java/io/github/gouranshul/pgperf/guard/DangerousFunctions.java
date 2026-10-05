@@ -41,7 +41,8 @@ final class DangerousFunctions {
             new Family("pg_create_", "", "it creates server objects"),
             new Family("pg_drop_", "", "it drops server objects"),
             new Family("pg_wal_", "", "it controls WAL replay"),
-            new Family("pg_backup_", "", "it controls backups"));
+            new Family("pg_backup_", "", "it controls backups"),
+            new Family("hypopg", "", "hypothetical indexes would leak into other calls on a pooled connection"));
 
     private DangerousFunctions() {
     }

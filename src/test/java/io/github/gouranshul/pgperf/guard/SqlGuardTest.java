@@ -163,6 +163,7 @@ class SqlGuardTest {
                 "SELECT query_to_xml('DELETE FROM shop.orders', true, false, '')|query_to_xml",
                 "SELECT nextval('shop.orders_id_seq')|nextval",
                 "SELECT pg_advisory_lock(1)|pg_advisory_lock",
+                "SELECT * FROM hypopg_create_index('CREATE INDEX ON shop.orders (id)')|hypopg_create_index",
                 "SELECT coalesce(NULL, pg_sleep(1)::text)|pg_sleep",
                 "WITH x AS (SELECT pg_sleep(1)) SELECT * FROM x|pg_sleep",
                 // Parser differential: a backslash-escaping parser sees one string literal here,
