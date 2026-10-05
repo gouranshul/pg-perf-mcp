@@ -1,6 +1,7 @@
 package io.github.gouranshul.pgperf.tools;
 
 import io.github.gouranshul.pgperf.config.PgPerfProperties;
+import io.github.gouranshul.pgperf.db.DatabaseErrors;
 import io.github.gouranshul.pgperf.guard.SqlRejectedException;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package io.github.gouranshul.pgperf.tools;
+package io.github.gouranshul.pgperf.db;
 
 import java.sql.SQLException;
 import java.time.Duration;
@@ -11,12 +11,12 @@ import org.springframework.jdbc.CannotGetJdbcConnectionException;
  * server's primary error text where it describes the query, never host names, ports, user names,
  * stack traces or driver internals.
  */
-final class DatabaseErrors {
+public final class DatabaseErrors {
 
     private DatabaseErrors() {
     }
 
-    static String describe(RuntimeException e, Duration statementTimeout) {
+    public static String describe(RuntimeException e, Duration statementTimeout) {
         if (e instanceof CannotGetJdbcConnectionException) {
             return "The database is unavailable right now. Try again shortly.";
         }
