@@ -74,6 +74,22 @@ class PgLexerTest {
     }
 
     @Test
+    void decodesUnicodeEscapedIdentifiersAsPostgresDoes() {
+        assertThat(PgLexer.tokenize("SELECT U&\"\\0070g_sleep\"(1)").get(1).value()).isEqualTo("pg_sleep");
+        assertThat(PgLexer.decodeUnicodeEscapes("a\\+000062\\\\c")).isEqualTo("ab\\c");
+        assertThatThrownBy(() -> PgLexer.tokenize("SELECT U&\"\\00zz\""))
+                .isInstanceOf(SqlRejectedException.class).hasMessageContaining("Unicode escape");
+        assertThatThrownBy(() -> PgLexer.tokenize("SELECT U&\"\\00\""))
+                .isInstanceOf(SqlRejectedException.class).hasMessageContaining("Unicode escape");
+    }
+
+    @Test
+    void rejectsUescapeClauses() {
+        assertThatThrownBy(() -> PgLexer.tokenize("SELECT U&\"!0070g_sleep\" UESCAPE '!' (1)"))
+                .isInstanceOf(SqlRejectedException.class).hasMessageContaining("UESCAPE");
+    }
+
+    @Test
     void rejectsUnterminatedQuotedIdentifier() {
         assertThatThrownBy(() -> PgLexer.tokenize("SELECT U&\"abc"))
                 .isInstanceOf(SqlRejectedException.class)

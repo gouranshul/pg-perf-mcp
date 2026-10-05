@@ -65,9 +65,9 @@ public final class SqlGuard {
         List<Token> body = singleStatement(tokens);
         String statementSql = sql.substring(body.getFirst().start(), body.getLast().end());
 
+        rejectDangerousFunctions(body);
         Select select = parseSelect(statementSql);
         new SelectSafetyVisitor().check(select);
-        rejectDangerousFunctions(body);
         rejectWriteKeywords(body);
 
         return new ValidatedSql(statementSql, maxParameterIndex(body));

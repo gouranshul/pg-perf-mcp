@@ -42,7 +42,13 @@ final class DangerousFunctions {
             new Family("pg_drop_", "", "it drops server objects"),
             new Family("pg_wal_", "", "it controls WAL replay"),
             new Family("pg_backup_", "", "it controls backups"),
-            new Family("hypopg", "", "hypothetical indexes would leak into other calls on a pooled connection"));
+            new Family("hypopg", "", "hypothetical indexes would leak into other calls on a pooled connection"),
+            new Family("pg_logical_", "", "it consumes or writes logical replication data"),
+            new Family("pg_copy_", "", "it creates replication slots"),
+            new Family("pg_file_", "", "it writes server files"),
+            new Family("pg_restore_", "", "it overwrites planner statistics"),
+            new Family("pg_clear_", "", "it clears planner statistics"),
+            new Family("binary_upgrade_", "", "it is reserved for pg_upgrade"));
 
     private DangerousFunctions() {
     }

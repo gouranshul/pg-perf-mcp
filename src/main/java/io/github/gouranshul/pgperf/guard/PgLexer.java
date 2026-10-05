@@ -49,6 +49,12 @@ final class PgLexer {
     static List<Token> tokenize(String sql) {
         PgLexer lexer = new PgLexer(sql);
         lexer.run();
+        for (Token token : lexer.tokens) {
+            // UESCAPE changes the escape character of a preceding U&"..." name; rather than model it, refuse it.
+            if (token.type() == Type.IDENTIFIER && token.value().equals("uescape")) {
+                throw new SqlRejectedException("UESCAPE is not supported");
+            }
+        }
         return List.copyOf(lexer.tokens);
     }
 
@@ -69,6 +75,8 @@ final class PgLexer {
                 readQuoted(pos, pos + 2, '\'', false, Type.STRING);
             } else if (startsWithIgnoreCase("u&\"")) {
                 readQuoted(pos, pos + 2, '"', false, Type.QUOTED_IDENTIFIER);
+                Token raw = tokens.removeLast();
+                tokens.add(new Token(raw.type(), decodeUnicodeEscapes(raw.value()), raw.start(), raw.end()));
             } else if (c == '\'') {
                 readQuoted(pos, pos, '\'', false, Type.STRING);
             } else if (c == '"') {
@@ -198,6 +206,39 @@ final class PgLexer {
             }
         }
         tokens.add(new Token(Type.NUMBER, sql.substring(start, pos), start, pos));
+    }
+
+    /**
+     * Resolves {@code \XXXX}, {@code \+XXXXXX} and {@code \\} in a U&amp;"..." name, so that
+     * {@code U&"\0070g_sleep"} is recognized as {@code pg_sleep}.
+     */
+    static String decodeUnicodeEscapes(String raw) {
+        StringBuilder out = new StringBuilder();
+        int i = 0;
+        while (i < raw.length()) {
+            char c = raw.charAt(i);
+            if (c != '\\') {
+                out.append(c);
+                i++;
+            } else if (i + 1 < raw.length() && raw.charAt(i + 1) == '\\') {
+                out.append('\\');
+                i += 2;
+            } else {
+                boolean sixDigits = i + 1 < raw.length() && raw.charAt(i + 1) == '+';
+                int digitsStart = i + (sixDigits ? 2 : 1);
+                int digitsEnd = digitsStart + (sixDigits ? 6 : 4);
+                if (digitsEnd > raw.length()) {
+                    throw new SqlRejectedException("Invalid Unicode escape in a U&\"...\" identifier");
+                }
+                try {
+                    out.appendCodePoint(Integer.parseInt(raw.substring(digitsStart, digitsEnd), 16));
+                } catch (IllegalArgumentException e) {
+                    throw new SqlRejectedException("Invalid Unicode escape in a U&\"...\" identifier");
+                }
+                i = digitsEnd;
+            }
+        }
+        return out.toString();
     }
 
     private boolean isPrefixedString(char prefix) {

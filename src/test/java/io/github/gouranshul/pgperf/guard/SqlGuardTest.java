@@ -166,6 +166,11 @@ class SqlGuardTest {
                 "SELECT * FROM hypopg_create_index('CREATE INDEX ON shop.orders (id)')|hypopg_create_index",
                 "SELECT coalesce(NULL, pg_sleep(1)::text)|pg_sleep",
                 "WITH x AS (SELECT pg_sleep(1)) SELECT * FROM x|pg_sleep",
+                // Unicode-escaped identifier: U&"\0070g_sleep" is pg_sleep to Postgres.
+                "SELECT U&\"\\0070g_sleep\"(1)|pg_sleep",
+                "SELECT * FROM pg_logical_slot_get_changes('slot', NULL, NULL)|pg_logical_slot_get_changes",
+                "SELECT pg_restore_relation_stats('relation', 'shop.orders'::regclass)|pg_restore_relation_stats",
+                "SELECT pg_file_write('x', 'y', false)|pg_file_write",
                 // Parser differential: a backslash-escaping parser sees one string literal here,
                 // Postgres sees the string 'abc\' followed by a live pg_sleep call.
                 "SELECT 'abc\\', pg_sleep(100) --'|pg_sleep",
