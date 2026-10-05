@@ -55,15 +55,16 @@ class IndexToolsIT extends PostgresIntegrationTest {
     @Test
     void hypotheticalIndexesDoNotLeakIntoThePooledConnection() {
         tools.suggestIndexes("SELECT id FROM shop.orders WHERE customer_id = 9");
-        long leaked = executor.run(db -> db.client().sql("SELECT count(*) FROM hypopg_list_indexes")
+        long leaked = executor.run(db -> db.client().sql("SELECT count(*) FROM hypopg()")
                 .query(Long.class).single());
         assertThat(leaked).isZero();
     }
 
     @Test
     void reportsLeadingWildcardSearchesAsANote() {
+        // orders, not products: the advisor ignores tables under 10k rows and the test seed is small.
         JsonNode result = ToolResults.json(tools.suggestIndexes(
-                "SELECT id FROM shop.products WHERE name LIKE '%Bamboo Mug%'"));
+                "SELECT id FROM shop.orders WHERE status LIKE '%end%'"));
         assertThat(result.path("notes")).anySatisfy(n -> assertThat(n.asString()).contains("pg_trgm"));
     }
 }
