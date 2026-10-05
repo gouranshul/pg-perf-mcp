@@ -1,5 +1,6 @@
 package io.github.gouranshul.pgperf.tools;
 
+import io.github.gouranshul.pgperf.audit.RowCounted;
 import io.github.gouranshul.pgperf.db.CatalogQueries;
 import io.github.gouranshul.pgperf.db.ReadOnlyExecutor;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
@@ -67,7 +68,12 @@ public class QueryStatsTools {
             double maxTimeMs, long rows, Double sharedBlockHitRatio, double percentOfTotalTime) {
     }
 
-    public record SlowQueries(String orderedBy, List<SlowQuery> queries, String hint) {
+    public record SlowQueries(String orderedBy, List<SlowQuery> queries, String hint) implements RowCounted {
+
+        @Override
+        public int rowCount() {
+            return queries.size();
+        }
     }
 
     @McpTool(name = "top_slow_queries", title = "Top slow queries",
@@ -86,7 +92,8 @@ public class QueryStatsTools {
             @McpToolParam(required = false,
                     description = "Ranking: total_time (default, overall load), mean_time (slowest per call), "
                             + "calls (most frequent, e.g. N+1 patterns) or rows (most rows).") String orderBy) {
-        return runner.run("top_slow_queries", () -> collect(limit, OrderBy.parse(orderBy)));
+        return runner.run("top_slow_queries", ToolRunner.args("limit", limit, "orderBy", orderBy),
+                () -> collect(limit, OrderBy.parse(orderBy)));
     }
 
     SlowQueries collect(Integer limit, OrderBy order) {

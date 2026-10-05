@@ -1,6 +1,7 @@
 package io.github.gouranshul.pgperf.tools;
 
 import io.github.gouranshul.pgperf.analysis.ExplainResult;
+import io.github.gouranshul.pgperf.audit.RowCounted;
 import io.github.gouranshul.pgperf.analysis.IndexAdvice;
 import io.github.gouranshul.pgperf.analysis.IndexAdvice.Suggestion;
 import io.github.gouranshul.pgperf.analysis.IndexAdvisor;
@@ -58,7 +59,12 @@ public class IndexTools {
     }
 
     public record SuggestIndexesResponse(double currentEstimatedCost, List<IndexCandidate> suggestions,
-            List<String> notes, String validation, String important) {
+            List<String> notes, String validation, String important) implements RowCounted {
+
+        @Override
+        public int rowCount() {
+            return suggestions.size();
+        }
     }
 
     @McpTool(name = "suggest_indexes", title = "Suggest indexes",
@@ -74,7 +80,7 @@ public class IndexTools {
                     idempotentHint = true, openWorldHint = false))
     public CallToolResult suggestIndexes(
             @McpToolParam(description = "One SELECT statement to optimize, e.g. from top_slow_queries.") String sql) {
-        return runner.run("suggest_indexes", () -> suggest(sql));
+        return runner.run("suggest_indexes", ToolRunner.args("sql", sql), () -> suggest(sql));
     }
 
     SuggestIndexesResponse suggest(String sql) {

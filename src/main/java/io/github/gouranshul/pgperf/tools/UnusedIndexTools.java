@@ -1,5 +1,6 @@
 package io.github.gouranshul.pgperf.tools;
 
+import io.github.gouranshul.pgperf.audit.RowCounted;
 import io.github.gouranshul.pgperf.db.ReadOnlyExecutor;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import java.time.OffsetDateTime;
@@ -36,7 +37,12 @@ public class UnusedIndexTools {
      * @param statsSince when usage counters were last reset; "unused" only means "since then"
      */
     public record UnusedIndexes(OffsetDateTime statsSince, long totalBytes, List<UnusedIndex> indexes,
-            String caution) {
+            String caution) implements RowCounted {
+
+        @Override
+        public int rowCount() {
+            return indexes.size();
+        }
     }
 
     @McpTool(name = "unused_indexes", title = "Unused indexes",
@@ -49,7 +55,7 @@ public class UnusedIndexTools {
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false,
                     idempotentHint = true, openWorldHint = false))
     public CallToolResult unusedIndexes() {
-        return runner.run("unused_indexes", this::find);
+        return runner.run("unused_indexes", ToolRunner.args(), this::find);
     }
 
     UnusedIndexes find() {

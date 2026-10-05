@@ -1,5 +1,6 @@
 package io.github.gouranshul.pgperf.tools;
 
+import io.github.gouranshul.pgperf.audit.RowCounted;
 import io.github.gouranshul.pgperf.db.ReadOnlyExecutor;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import java.util.LinkedHashSet;
@@ -41,7 +42,12 @@ public class LockTools {
      * @param rootBlockers pids that block others without being blocked themselves: fix these first
      */
     public record BlockingReport(int blockedSessions, List<Integer> rootBlockers, List<BlockingPair> pairs,
-            String hint) {
+            String hint) implements RowCounted {
+
+        @Override
+        public int rowCount() {
+            return pairs.size();
+        }
     }
 
     @McpTool(name = "blocking_sessions", title = "Blocking sessions",
@@ -55,7 +61,7 @@ public class LockTools {
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false,
                     idempotentHint = false, openWorldHint = false))
     public CallToolResult blockingSessions() {
-        return runner.run("blocking_sessions", this::report);
+        return runner.run("blocking_sessions", ToolRunner.args(), this::report);
     }
 
     BlockingReport report() {

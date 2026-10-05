@@ -1,6 +1,7 @@
 package io.github.gouranshul.pgperf.tools;
 
 import io.github.gouranshul.pgperf.analysis.TableHealthRules;
+import io.github.gouranshul.pgperf.audit.RowCounted;
 import io.github.gouranshul.pgperf.analysis.TableHealthRules.Stats;
 import io.github.gouranshul.pgperf.db.ReadOnlyExecutor;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
@@ -37,7 +38,12 @@ public class TableHealthTools {
             boolean autovacuumEnabled, String tableSize, String indexesSize, String totalSize, List<String> warnings) {
     }
 
-    public record TableHealthReport(int tablesShown, List<TableHealth> tables) {
+    public record TableHealthReport(int tablesShown, List<TableHealth> tables) implements RowCounted {
+
+        @Override
+        public int rowCount() {
+            return tablesShown;
+        }
     }
 
     @McpTool(name = "table_health", title = "Table health",
@@ -52,7 +58,7 @@ public class TableHealthTools {
     public CallToolResult tableHealth(
             @McpToolParam(required = false, description = "Table name, optionally schema-qualified "
                     + "(e.g. orders or shop.orders). Omit to scan all user tables.") String table) {
-        return runner.run("table_health", () -> report(table));
+        return runner.run("table_health", ToolRunner.args("table", table), () -> report(table));
     }
 
     TableHealthReport report(String table) {

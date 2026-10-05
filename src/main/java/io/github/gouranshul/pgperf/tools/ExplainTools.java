@@ -58,7 +58,8 @@ public class ExplainTools {
             @McpToolParam(description = "One SELECT statement, e.g. copied from top_slow_queries.") String sql,
             @McpToolParam(required = false, description = "true to execute the query and report actual rows and "
                     + "timings (EXPLAIN ANALYZE). Default false: plan only.") Boolean analyze) {
-        return runner.run("explain_query", () -> explain(sql, Boolean.TRUE.equals(analyze)));
+        return runner.run("explain_query", ToolRunner.args("sql", sql, "analyze", analyze),
+                () -> explain(sql, Boolean.TRUE.equals(analyze)));
     }
 
     ExplainResponse explain(String sql, boolean analyze) {

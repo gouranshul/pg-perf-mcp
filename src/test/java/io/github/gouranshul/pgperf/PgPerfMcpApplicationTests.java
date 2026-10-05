@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.gouranshul.pgperf.support.McpTestClient;
 import io.modelcontextprotocol.client.McpSyncClient;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.GetPromptRequest;
 import io.modelcontextprotocol.spec.McpSchema.Prompt;
 import io.modelcontextprotocol.spec.McpSchema.Resource;
@@ -14,6 +17,7 @@ import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
@@ -27,6 +31,9 @@ class PgPerfMcpApplicationTests {
 
     @LocalServerPort
     int port;
+
+    @Autowired
+    MeterRegistry meters;
 
     McpSyncClient client;
 
@@ -67,6 +74,23 @@ class PgPerfMcpApplicationTests {
         assertThat(client.listResources().resources()).extracting(Resource::uri).contains("pg://schema/overview");
         assertThat(client.listResourceTemplates().resourceTemplates()).extracting(ResourceTemplate::uriTemplate)
                 .contains("pg://schema/{table}");
+    }
+
+    @Test
+    void writeAttemptsAreRejectedByTheGuardBeforeReachingTheDatabase() {
+        double before = rejections();
+        CallToolResult result = client.callTool(new CallToolRequest("explain_query",
+                Map.of("sql", "WITH gone AS (DELETE FROM shop.orders RETURNING *) SELECT * FROM gone", "analyze", true)));
+
+        assertThat(result.isError()).isTrue();
+        assertThat(((TextContent) result.content().getFirst()).text())
+                .startsWith("Rejected by the SQL guard: Data-modifying CTE");
+        assertThat(rejections()).isEqualTo(before + 1);
+    }
+
+    private double rejections() {
+        var counter = meters.find("mcp.guard.rejections").tag("tool", "explain_query").counter();
+        return counter == null ? 0 : counter.count();
     }
 
     @Test
