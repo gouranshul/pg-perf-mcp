@@ -1,0 +1,63 @@
+# Local demo: PostgreSQL 18 with a seeded online-shop database, plus the MCP server.
+#
+#   cp .env.example .env     # then edit the placeholder secrets
+#   docker compose up --build
+#
+# First start seeds ~4.5M rows and takes a minute or two; the app waits for the DB health check.
+
+name: pg-perf-mcp
+
+services:
+  db:
+    build: ./docker/postgres
+    image: pg-perf-mcp-db:local
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (see .env.example)}
+      POSTGRES_DB: ${POSTGRES_DB:-shop}
+      MCP_DB_PASSWORD: ${MCP_DB_PASSWORD:?Set MCP_DB_PASSWORD in .env (see .env.example)}
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - pg_stat_statements.track=all
+      - -c
+      - pg_stat_statements.max=10000
+      - -c
+      - track_io_timing=on
+      - -c
+      - log_lock_waits=on
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./docker/init.sql:/docker/init.sql:ro
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+      - ./demo:/demo:ro
+    healthcheck:
+      # The init phase listens on the unix socket only, so a TCP check means "seeded and ready".
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+
+  app:
+    build: .
+    image: pg-perf-mcp:local
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPERF_DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-shop}
+      PGPERF_DB_USER: mcp_readonly
+      PGPERF_DB_PASSWORD: ${MCP_DB_PASSWORD}
+      MCP_API_KEY: ${MCP_API_KEY:?Set MCP_API_KEY in .env (see .env.example)}
+      OTEL_TRACING_ENABLED: ${OTEL_TRACING_ENABLED:-false}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://localhost:4318/v1/traces}
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+
+volumes:
+  pgdata:
