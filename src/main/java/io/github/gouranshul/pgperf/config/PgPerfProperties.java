@@ -11,7 +11,32 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param query limits applied to every database call made by a tool
  */
 @ConfigurationProperties("pgperf")
-public record PgPerfProperties(@DefaultValue Guard guard, @DefaultValue Query query) {
+public record PgPerfProperties(@DefaultValue Guard guard, @DefaultValue Query query, @DefaultValue Security security) {
+
+    /**
+     * @param apiKey shared secret clients send as {@code Authorization: Bearer <apiKey>}
+     *               (env {@code MCP_API_KEY}); the server refuses to start without one
+     */
+    public record Security(String apiKey) {
+
+        static final int MIN_API_KEY_LENGTH = 16;
+
+        public Security {
+            if (apiKey == null || apiKey.isBlank()) {
+                throw new IllegalArgumentException(
+                        "pgperf.security.api-key is not set. Set the MCP_API_KEY environment variable.");
+            }
+            if (apiKey.length() < MIN_API_KEY_LENGTH) {
+                throw new IllegalArgumentException(
+                        "MCP_API_KEY must be at least " + MIN_API_KEY_LENGTH + " characters long.");
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "Security[apiKey=<redacted>]";
+        }
+    }
 
     /** @param maxSqlLength longest SQL text accepted from a client, in characters */
     public record Guard(@DefaultValue("20000") int maxSqlLength) {
