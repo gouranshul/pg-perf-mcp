@@ -4,6 +4,30 @@ spring:
   threads:
     virtual:
       enabled: true
+  datasource:
+    url: ${PGPERF_DB_URL:jdbc:postgresql://localhost:5432/shop}
+    username: ${PGPERF_DB_USER:mcp_readonly}
+    password: ${PGPERF_DB_PASSWORD:}
+    hikari:
+      pool-name: pgperf-readonly
+      # Layer 3 of the read-only defense: every pooled connection is read-only at the JDBC level
+      # and the session itself defaults to read-only transactions.
+      read-only: true
+      auto-commit: false
+      connection-init-sql: SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 5000
+      validation-timeout: 2000
+      data-source-properties:
+        ApplicationName: pg-perf-mcp
+
+pgperf:
+  guard:
+    max-sql-length: 20000
+  query:
+    statement-timeout: 5s
+    max-rows: 200
 
 management:
   endpoints:
