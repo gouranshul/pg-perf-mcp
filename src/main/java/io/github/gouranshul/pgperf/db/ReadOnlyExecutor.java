@@ -27,6 +27,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class ReadOnlyExecutor {
 
     private final TransactionTemplate transactions;
+    private final JdbcTemplate template;
     private final JdbcClient jdbc;
     private final Duration statementTimeout;
     private final int maxRows;
@@ -40,6 +41,7 @@ public class ReadOnlyExecutor {
         template.setMaxRows(maxRows);
         // Client-side safety net in case the server-side timeout is somehow not applied.
         template.setQueryTimeout((int) statementTimeout.plusSeconds(2).toSeconds());
+        this.template = template;
         this.jdbc = JdbcClient.create(template);
 
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
@@ -50,12 +52,12 @@ public class ReadOnlyExecutor {
     }
 
     /** Runs {@code work} with the default statement timeout. */
-    public <T> T run(Function<JdbcClient, T> work) {
+    public <T> T run(Function<ReadOnlySession, T> work) {
         return run(statementTimeout, work);
     }
 
     /** Runs {@code work} with a specific timeout, never longer than the configured default. */
-    public <T> T run(Duration timeout, Function<JdbcClient, T> work) {
+    public <T> T run(Duration timeout, Function<ReadOnlySession, T> work) {
         Duration effective = timeout.compareTo(statementTimeout) > 0 ? statementTimeout : timeout;
         String millis = effective.toMillis() + "ms";
         return transactions.execute(status -> {
@@ -65,7 +67,7 @@ public class ReadOnlyExecutor {
                     .params(millis, millis)
                     .query((rs, n) -> null)
                     .list();
-            return work.apply(jdbc);
+            return work.apply(new ReadOnlySession(jdbc, template));
         });
     }
 
