@@ -63,3 +63,6 @@ ALTER TABLE orders SET (autovacuum_enabled = false);
 UPDATE orders SET status = 'delivered' WHERE status = 'shipped' AND id % 2 = 0;
 
 ANALYZE;
+
+-- Start with clean statistics, so top_slow_queries shows the workload and not this seed script.
+SELECT public.pg_stat_statements_reset();
