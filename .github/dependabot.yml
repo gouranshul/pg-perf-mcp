@@ -23,5 +23,6 @@ updates:
     directories:
       - /
       - /docker/postgres
+      - /docs/vhs
     schedule:
       interval: weekly
