@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: pg-perf-mcp
+  threads:
+    virtual:
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
