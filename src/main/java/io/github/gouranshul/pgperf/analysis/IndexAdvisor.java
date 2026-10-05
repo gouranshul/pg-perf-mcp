@@ -254,7 +254,7 @@ public final class IndexAdvisor {
                 .findFirst();
     }
 
-    static String statement(Candidate c) {
+    private static String statement(Candidate c) {
         String[] parts = c.table.split("\\.", 2);
         String tableName = parts.length == 2 ? parts[1] : parts[0];
         String name = ("idx_" + tableName + "_" + String.join("_", c.baseColumns()))

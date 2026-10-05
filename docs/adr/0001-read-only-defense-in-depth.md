@@ -51,5 +51,12 @@ The guard **fails closed**: SQL that either reader cannot parse is rejected.
   column literally named `update`). The rejection message says why and how to work around it.
 - `EXPLAIN ANALYZE` really executes the query, but only inside layers 2 to 5: it cannot write,
   is cancelled after the timeout and is rolled back.
+- **Read-only is not the same as no data access.** Tools return plans and statistics, never result
+  rows, but the role can read whatever it is granted. Error messages that can echo row values
+  (data exceptions such as `CAST(email AS int)` under `analyze=true`, raised exceptions) are reduced
+  to their SQLSTATE; only messages that describe the query itself are shown. Grant the role only the
+  schemas you are comfortable exposing, or point it at a replica with masked data.
+- Views or user-defined functions that the role may call still run, but only inside layers 2 to 5:
+  they cannot write and are cancelled at the timeout.
 - Every layer has its own tests: the guard has 100+ parameterized cases including injection
   tricks; `ReadOnlyExecutorIT` sends writes *around* the guard and proves the database refuses them.

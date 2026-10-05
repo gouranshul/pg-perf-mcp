@@ -40,10 +40,24 @@ public final class DatabaseErrors {
         if (state.startsWith("08") || state.startsWith("28") || state.startsWith("53") || state.startsWith("57P")) {
             return "The database is unavailable right now. Try again shortly.";
         }
-        if (primary != null) {
+        if (primary != null && describesTheQuery(state)) {
             return "Database error (SQLSTATE %s): %s".formatted(state, primary);
         }
         return "Database error (SQLSTATE %s).".formatted(state);
+    }
+
+    /**
+     * Only some error classes describe the query itself (syntax, unknown objects, privileges,
+     * missing prerequisites such as an extension). Others can echo table data: with
+     * {@code analyze=true}, {@code CAST(email AS int)} fails with "invalid input syntax for type
+     * integer: <the email>". Those keep only their SQLSTATE.
+     */
+    static boolean describesTheQuery(String state) {
+        return state.startsWith("42") // syntax error or access rule violation
+                || state.startsWith("0A") // feature not supported
+                || state.startsWith("3D") // invalid catalog name
+                || state.startsWith("3F") // invalid schema name
+                || state.startsWith("55"); // object not in prerequisite state
     }
 
     private static SQLException findSqlException(Throwable e) {
