@@ -1,5 +1,5 @@
-/mvnw text eol=lf
+* text=auto eol=lf
 *.cmd text eol=crlf
-*.sh text eol=lf
-*.sql text eol=lf
-Dockerfile text eol=lf
+*.jar binary
+*.png binary
+*.gif binary
