@@ -10,8 +10,8 @@ spring:
     password: ${PGPERF_DB_PASSWORD:}
     hikari:
       pool-name: pgperf-readonly
-      # Layer 3 of the read-only defense: every pooled connection is read-only at the JDBC level
-      # and the session itself defaults to read-only transactions.
+      # Every pooled connection is read-only at the JDBC level and the session itself defaults to
+      # read-only transactions, independent of the role settings on the server.
       read-only: true
       auto-commit: false
       connection-init-sql: SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY
@@ -41,7 +41,16 @@ spring:
         streamable-http:
           mcp-endpoint: /mcp
 
+server:
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+
 pgperf:
+  security:
+    # Clients must send "Authorization: Bearer <MCP_API_KEY>". Startup fails if it is missing.
+    api-key: ${MCP_API_KEY:}
   guard:
     max-sql-length: 20000
   query:
@@ -53,3 +62,26 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      # Health is the only unauthenticated endpoint, so it never reveals component details.
+      show-details: never
+  tracing:
+    # OpenTelemetry tracing is opt-in: OTEL_TRACING_ENABLED=true exports spans via OTLP/HTTP.
+    enabled: ${OTEL_TRACING_ENABLED:false}
+    sampling:
+      probability: ${OTEL_TRACING_SAMPLING_PROBABILITY:1.0}
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+  otlp:
+    metrics:
+      export:
+        # Metrics are scraped from /actuator/prometheus instead of pushed.
+        enabled: false
+  logging:
+    export:
+      otlp:
+        enabled: false
