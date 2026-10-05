@@ -48,7 +48,8 @@ class QueryPlanner {
             options = "VERBOSE, FORMAT JSON";
         }
         // Safe to concatenate: the guard proved this is exactly one SELECT statement.
-        String plan = db.queryForString("EXPLAIN (" + options + ") " + sql.sql());
+        String explain = "EXPLAIN (" + options + ") " + sql.sql();
+        String plan = sql.hasParameters() ? db.queryForStringSimpleProtocol(explain) : db.queryForString(explain);
         return ExplainResult.parse(json.readTree(plan));
     }
 
