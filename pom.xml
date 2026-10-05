@@ -28,6 +28,7 @@
 		<!-- Versions verified on Maven Central; everything else is managed by the Spring Boot BOM. -->
 		<spring-ai.version>2.0.1</spring-ai.version>
 		<jsqlparser.version>5.4</jsqlparser.version>
+		<jacoco.version>0.8.15</jacoco.version>
 	</properties>
 
 	<dependencyManagement>
@@ -119,6 +120,52 @@
 							<goal>integration-test</goal>
 							<goal>verify</goal>
 						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Coverage from unit and integration tests (one exec file); the security core is gated. -->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco.version}</version>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>check</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<rule>
+									<element>PACKAGE</element>
+									<includes>
+										<include>io.github.gouranshul.pgperf.guard</include>
+										<include>io.github.gouranshul.pgperf.analysis</include>
+									</includes>
+									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.80</minimum>
+										</limit>
+									</limits>
+								</rule>
+							</rules>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
