@@ -1,0 +1,5 @@
+# Reviewed false positives (gitleaks fingerprint format: commit:file:rule:line).
+#
+# A dummy API key that the integration tests used against a throwaway Testcontainers database.
+# It never protected anything real; the tests now generate a random key per run.
+a768e973fc08b650b96b50737ba14ff60e1d02ce:src/test/java/io/github/gouranshul/pgperf/support/PostgresIntegrationTest.java:generic-api-key:20

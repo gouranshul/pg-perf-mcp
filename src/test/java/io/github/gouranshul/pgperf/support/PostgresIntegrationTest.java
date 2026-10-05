@@ -3,6 +3,7 @@ package io.github.gouranshul.pgperf.support;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.UUID;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -17,7 +18,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers(disabledWithoutDocker = true)
 public abstract class PostgresIntegrationTest {
 
-    protected static final String TEST_API_KEY = "test-api-key-0123456789abcdef";
+    /** Random per run, so no key-shaped literal lives in the repository. */
+    protected static final String TEST_API_KEY = "test-" + UUID.randomUUID();
 
     @DynamicPropertySource
     static void datasource(DynamicPropertyRegistry registry) {
