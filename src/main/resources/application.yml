@@ -13,7 +13,10 @@ spring:
       # Every pooled connection is read-only at the JDBC level and the session itself defaults to
       # read-only transactions, independent of the role settings on the server.
       read-only: true
-      auto-commit: false
+      # Must stay true: with auto-commit off, the init SQL below leaves a transaction open on every
+      # new connection and the transaction manager can no longer set the isolation level. The
+      # transaction manager switches auto-commit off itself for each ReadOnlyExecutor call.
+      auto-commit: true
       connection-init-sql: SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY
       maximum-pool-size: 5
       minimum-idle: 1
