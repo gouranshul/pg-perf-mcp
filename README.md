@@ -78,11 +78,35 @@ flowchart LR
 | `unused_indexes` | Indexes with `idx_scan = 0`, largest first, excluding primary key, unique and constraint indexes; includes size, definition and a `DROP INDEX CONCURRENTLY` to review. | Nothing is dropped. Reports when stats were last reset. |
 | `table_health` | Live/dead tuples, dead ratio, last (auto)vacuum/analyze, rows changed since analyze, seq vs index scans, sizes, with plain-language warnings. | Catalog reads only. |
 | `blocking_sessions` | Blocked/blocking pairs via `pg_blocking_pids`, truncated query texts, wait time, lock type/mode/table, blocker state, root blockers. | Never cancels or terminates anything. |
+| `slow_functions` | User-defined functions (PL/pgSQL, SQL, ...) ranked by total, self or mean time or calls, from `pg_stat_user_functions`, with language and volatility. | Catalog reads only. Needs `track_functions`. |
+| `explain_function` | Looks **inside** the functions a query calls: time per function, every statement executed inside them with calls, time and its own analyzed plan, and findings such as a seq scan inside a function, a function called once per row, or a read-only function left `VOLATILE`. Includes the function source. | SQL guard first; runs in the same rolled-back read-only transaction as `explain_query`, so functions that write fail. `auto_explain` is switched on for that transaction only, with generic plans so no data values appear. |
 
 **Resources:** `pg://schema/overview` (tables, row estimates, sizes, indexes) and
 `pg://schema/{table}` (columns, indexes with scan counts, foreign keys flagged when unindexed).
 **Prompt:** `diagnose_slow_database`, a guided workflow: slow queries, then explain, suggest
-indexes, table health, then a prioritized summary.
+indexes, table health, functions, then a prioritized summary.
+
+### Why a separate tool for database functions
+
+`EXPLAIN` shows a function call as one opaque expression, and charges its time to whichever plan
+node evaluates it. On the demo catalog page (20 products, each calling `shop.product_rating`),
+`explain_query` blames the index scan on `products` (184 ms self time) and finds nothing else
+serious. `explain_function` on the same query, against the full demo data:
+
+```text
+shop.product_rating          plpgsql  20 calls  99% of execution time
+  SELECT avg(rating) FROM shop.reviews WHERE product_id = p_product_id
+                             20 calls  175 ms  96% of execution time
+HIGH    FUNCTION_DOMINATES_QUERY  shop.product_rating takes 99% of the query's execution time
+HIGH    FUNCTION_CALLED_PER_ROW   ran 20 times for one query (9.0 ms per call)
+HIGH    SEQ_SCAN_ON_LARGE_TABLE   inside shop.product_rating: Seq Scan on shop.reviews
+                                  reads all ~250k rows to apply filter (reviews.product_id = $1)
+```
+
+How it works ([ADR 0006](docs/adr/0006-looking-inside-database-functions.md)): the query runs once
+with `auto_explain` enabled for that transaction only, so the plan of each nested statement comes
+back as a notice; per-function time comes from `pg_stat_xact_user_functions` and per-statement
+calls from `pg_stat_statements`, both as before/after differences.
 
 ## Security model
 
@@ -153,7 +177,21 @@ Claude Desktop launches stdio servers, so use the `mcp-remote` bridge
 
 Create a role like `mcp_readonly` (see [`docker/init.sql`](docker/init.sql)), make sure
 `pg_stat_statements` is in `shared_preload_libraries`, and set the variables below. Prefer a
-replica or staging database: `analyze=true` executes queries.
+replica or staging database: `analyze=true` and `explain_function` execute queries.
+
+For the function tools (optional; everything else works without them):
+
+```sql
+-- postgresql.conf: track_functions = 'pl' (or 'all' to include SQL functions), then reload.
+-- Load auto_explain for this role only (no restart needed); it stays inactive until a call enables it:
+ALTER ROLE mcp_readonly SET session_preload_libraries = 'auto_explain';
+-- PostgreSQL 15+: let the role change only these settings, only for its own transactions:
+GRANT SET ON PARAMETER auto_explain.log_min_duration, auto_explain.log_analyze,
+    auto_explain.log_nested_statements, auto_explain.log_format, auto_explain.log_level,
+    auto_explain.log_verbose, auto_explain.log_parameter_max_length TO mcp_readonly;
+```
+
+Without these, `explain_function` still reports what it can and says in `notes` what is missing.
 
 ## Configuration
 
@@ -165,6 +203,7 @@ replica or staging database: `analyze=true` executes queries.
 | `pgperf.query.statement-timeout` | `5s` | Per-call `statement_timeout` and `lock_timeout` |
 | `pgperf.query.max-rows` | `200` | Row cap for every query |
 | `pgperf.guard.max-sql-length` | `20000` | Longest SQL accepted |
+| `pgperf.functions.nested-plan-threshold` | `1ms` | `explain_function` keeps the plan of a statement inside a function only for executions at least this long (every execution is still counted) |
 | `OTEL_TRACING_ENABLED` | `false` | Export traces via OTLP/HTTP |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:4318/v1/traces` | OTLP traces endpoint |
 | `OTEL_TRACING_SAMPLING_PROBABILITY` | `1.0` | Trace sampling ratio |
@@ -189,13 +228,14 @@ client over HTTP, and a JaCoCo gate (80% lines on the `guard` and `analysis` pac
 - [0003: Summarized plans instead of raw EXPLAIN](docs/adr/0003-summarized-plans-instead-of-raw-explain.md)
 - [0004: Suggest indexes, never execute them](docs/adr/0004-suggest-never-execute-indexes.md)
 - [0005: Platform versions and API differences](docs/adr/0005-platform-versions-and-api-notes.md)
+- [0006: Looking inside database functions](docs/adr/0006-looking-inside-database-functions.md)
 
 ## Roadmap
 
 - OAuth 2.1 resource server per the MCP authorization spec (per-user identity instead of a shared key)
 - Multiple named database targets, with read replicas preferred
 - Workload-level index advice (weigh candidates across all top queries, not one at a time)
-- `auto_explain` / `pg_stat_kcache` ingestion for plans of queries that already ran
+- `auto_explain` log / `pg_stat_kcache` ingestion for plans of queries that already ran in production
 - Optional raw-plan output and per-tool rate limits
 - MCP elicitation to confirm `analyze=true` on expensive queries
 

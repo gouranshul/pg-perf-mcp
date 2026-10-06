@@ -61,4 +61,7 @@ Other top-level folders: `demo/` (schema, seed, workload), `docker/` (Postgres i
 - All database access from tools goes through `ReadOnlyExecutor` (read-only tx, always rolled
   back, `SET LOCAL statement_timeout`, row cap).
 - Never execute `CREATE INDEX` or any DDL/DML. Suggestions are text only.
+- Session settings a tool changes (`auto_explain.*`, `plan_cache_mode`) are set with
+  `set_config(..., true)` inside a savepoint that is rolled back before anything else runs.
+  Nested plans use generic plans so no data values appear in them (ADR 0006).
 - Errors returned to the MCP client must not contain stack traces or connection details.
