@@ -28,6 +28,8 @@ public abstract class PostgresIntegrationTest {
         registry.add("spring.datasource.password", () -> DemoDatabase.READONLY_PASSWORD);
         registry.add("spring.datasource.hikari.maximum-pool-size", () -> "1");
         registry.add("pgperf.query.statement-timeout", () -> "3s");
+        // The test seed is tiny, so statements inside functions finish in well under 1 ms.
+        registry.add("pgperf.functions.nested-plan-threshold", () -> "0ms");
         registry.add("pgperf.security.api-key", () -> TEST_API_KEY);
     }
 

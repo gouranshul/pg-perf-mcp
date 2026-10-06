@@ -36,7 +36,10 @@ public class DiagnosisPrompts {
                    improvementPercent. Mention notes about LIKE '%%...%%' searches or low-selectivity filters.
                 4. Call table_health for each table in the plan. Flag dead-tuple bloat, disabled autovacuum and
                    stale statistics.
-                5. Optionally call unused_indexes (write overhead) and blocking_sessions (if the symptom is hangs
+                5. If slow statements call user-defined functions, call slow_functions, then explain_function with a
+                   SELECT that calls the worst one with realistic arguments. EXPLAIN of the calling query hides
+                   what runs inside a function; explain_function shows each statement inside it and its plan.
+                6. Optionally call unused_indexes (write overhead) and blocking_sessions (if the symptom is hangs
                    or timeouts rather than slow queries).
 
                 Finish with a summary:

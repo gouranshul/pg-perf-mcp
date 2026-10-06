@@ -1,9 +1,13 @@
 package io.github.gouranshul.pgperf.db;
 
 import java.sql.ResultSet;
+import java.sql.SQLWarning;
+import java.util.ArrayList;
 import java.util.List;
 import org.postgresql.core.BaseStatement;
 import org.postgresql.core.QueryExecutor;
+import org.postgresql.util.PSQLWarning;
+import org.postgresql.util.ServerErrorMessage;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.StatementCallback;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -34,6 +38,32 @@ public final class ReadOnlySession {
     public String queryForString(String sql) {
         List<String> rows = template.query(sql, (rs, n) -> rs.getString(1));
         return rows.isEmpty() ? null : rows.getFirst();
+    }
+
+    /**
+     * The first column of the first row, plus the text of every notice the server sent while
+     * the statement ran (for example plans from {@code auto_explain} with {@code log_level=notice}).
+     *
+     * @param value   first column of the first row, or null
+     * @param notices primary message of each notice, in arrival order
+     */
+    public record ResultWithNotices(String value, List<String> notices) {
+    }
+
+    /** Like {@link #queryForString(String)}, and also collects the notices the statement raised. */
+    public ResultWithNotices queryForStringWithNotices(String sql) {
+        return template.execute((StatementCallback<ResultWithNotices>) statement -> {
+            String value;
+            try (ResultSet rs = statement.executeQuery(sql)) {
+                value = rs.next() ? rs.getString(1) : null;
+            }
+            List<String> notices = new ArrayList<>();
+            for (SQLWarning w = statement.getWarnings(); w != null; w = w.getNextWarning()) {
+                ServerErrorMessage server = w instanceof PSQLWarning pw ? pw.getServerErrorMessage() : null;
+                notices.add(server != null ? server.getMessage() : w.getMessage());
+            }
+            return new ResultWithNotices(value, List.copyOf(notices));
+        });
     }
 
     /**

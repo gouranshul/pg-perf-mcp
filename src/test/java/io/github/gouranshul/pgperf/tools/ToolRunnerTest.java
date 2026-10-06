@@ -33,7 +33,8 @@ class ToolRunnerTest {
         observations.observationConfig().observationHandler(new DefaultMeterObservationHandler(meters));
         PgPerfProperties properties = new PgPerfProperties(new PgPerfProperties.Guard(1000),
                 new PgPerfProperties.Query(Duration.ofSeconds(5), 200),
-                new PgPerfProperties.Security("unit-test-key-0123456789"));
+                new PgPerfProperties.Security("unit-test-key-0123456789"),
+                new PgPerfProperties.Functions(Duration.ofMillis(1)));
         JsonMapper json = JsonMapper.builder().build();
         runner = new ToolRunner(json, properties, new AuditLogger(json), observations, meters);
     }

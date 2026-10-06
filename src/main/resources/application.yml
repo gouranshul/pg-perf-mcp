@@ -59,6 +59,10 @@ pgperf:
   query:
     statement-timeout: 5s
     max-rows: 200
+  functions:
+    # explain_function: capture the plan of a statement inside a function when one execution
+    # takes at least this long. Every execution is counted either way.
+    nested-plan-threshold: 1ms
 
 management:
   endpoints:

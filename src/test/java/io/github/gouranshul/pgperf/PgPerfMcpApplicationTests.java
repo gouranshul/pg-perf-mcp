@@ -51,7 +51,7 @@ class PgPerfMcpApplicationTests {
     void exposesAllToolsAsReadOnly() {
         assertThat(client.listTools().tools()).extracting(Tool::name).containsExactlyInAnyOrder(
                 "top_slow_queries", "explain_query", "suggest_indexes", "unused_indexes", "table_health",
-                "blocking_sessions");
+                "blocking_sessions", "slow_functions", "explain_function");
         assertThat(client.listTools().tools()).allSatisfy(tool -> {
             assertThat(tool.description()).hasSizeGreaterThan(100);
             assertThat(tool.annotations().readOnlyHint()).isTrue();
@@ -99,6 +99,7 @@ class PgPerfMcpApplicationTests {
         var prompt = client.getPrompt(new GetPromptRequest("diagnose_slow_database", Map.of("focus", "orders")));
         String text = ((TextContent) prompt.messages().getFirst().content()).text();
         assertThat(text).contains("top_slow_queries", "explain_query", "suggest_indexes", "table_health",
+                "slow_functions", "explain_function",
                 "particularly concerned about: orders", "LIKE '%...%'");
     }
 }

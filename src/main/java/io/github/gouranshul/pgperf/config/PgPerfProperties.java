@@ -8,10 +8,29 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * Application settings under {@code pgperf.*}.
  *
  * @param guard limits applied by the SQL guard
- * @param query limits applied to every database call made by a tool
+ * @param query     limits applied to every database call made by a tool
+ * @param functions settings for explain_function
  */
 @ConfigurationProperties("pgperf")
-public record PgPerfProperties(@DefaultValue Guard guard, @DefaultValue Query query, @DefaultValue Security security) {
+public record PgPerfProperties(@DefaultValue Guard guard, @DefaultValue Query query, @DefaultValue Security security,
+        @DefaultValue Functions functions) {
+
+    /**
+     * @param nestedPlanThreshold explain_function keeps the plan of a statement inside a function
+     *                            only for executions at least this long (auto_explain's
+     *                            {@code log_min_duration}). Every execution is still counted. Each
+     *                            captured plan travels to the server as a notice, so a function that
+     *                            loops over many fast statements would flood memory at 0; keep it
+     *                            above 0 outside tests.
+     */
+    public record Functions(@DefaultValue("1ms") Duration nestedPlanThreshold) {
+
+        public Functions {
+            if (nestedPlanThreshold.isNegative()) {
+                throw new IllegalArgumentException("pgperf.functions.nested-plan-threshold must not be negative");
+            }
+        }
+    }
 
     /**
      * @param apiKey shared secret clients send as {@code Authorization: Bearer <apiKey>}
