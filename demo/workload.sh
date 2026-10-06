@@ -20,6 +20,7 @@ docker compose exec -T db sh -c "pgbench -n -U \"\$POSTGRES_USER\" -d \"\$POSTGR
   -f /demo/workload/03_product_search.sql@2 \
   -f /demo/workload/04_pending_orders_count.sql@1 \
   -f /demo/workload/05_country_revenue_join.sql@1 \
-  -f /demo/workload/06_n_plus_one.sql@5"
+  -f /demo/workload/06_n_plus_one.sql@5 \
+  -f /demo/workload/07_functions.sql@1"
 
 echo "Done. Ask your assistant: \"Diagnose why the shop database is slow.\""

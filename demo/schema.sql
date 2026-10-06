@@ -56,3 +56,34 @@ CREATE TABLE reviews (
 
 -- Deliberately useless index (nothing in the workload filters on last_login).
 CREATE INDEX idx_customers_last_login ON customers (last_login);
+
+-- Database functions. Each hides a slow statement inside its body, which EXPLAIN of the calling
+-- query does not show: that is what explain_function and slow_functions are for. Table names are
+-- schema-qualified because a function body resolves names with the caller's search_path.
+
+-- PL/pgSQL, called once per row by the catalog page. reviews.product_id has no index, so every
+-- call scans the whole reviews table.
+CREATE FUNCTION product_rating(p_product_id bigint) RETURNS numeric
+LANGUAGE plpgsql STABLE AS $$
+DECLARE
+    v_rating numeric;
+BEGIN
+    SELECT avg(rating) INTO v_rating FROM shop.reviews WHERE product_id = p_product_id;
+    RETURN round(v_rating, 2);
+END
+$$;
+
+-- SQL function: orders.customer_id has no index, so every call scans all orders. Left VOLATILE
+-- (the default) although it only reads, which stops the planner from treating it as stable.
+CREATE FUNCTION customer_lifetime_value(p_customer_id bigint) RETURNS numeric
+LANGUAGE sql AS $$
+    SELECT coalesce(sum(total), 0) FROM shop.orders WHERE customer_id = p_customer_id
+$$;
+
+-- Writes. explain_function must refuse to run it: the call happens in a read-only transaction.
+CREATE FUNCTION mark_order_shipped(p_order_id bigint) RETURNS void
+LANGUAGE plpgsql AS $$
+BEGIN
+    UPDATE shop.orders SET status = 'shipped' WHERE id = p_order_id;
+END
+$$;

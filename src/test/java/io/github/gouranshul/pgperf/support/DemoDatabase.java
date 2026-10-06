@@ -11,7 +11,8 @@ import org.testcontainers.utility.MountableFile;
 
 /**
  * One Postgres container shared by every integration test, built from the same Dockerfile and init
- * scripts as {@code docker compose}: pg_stat_statements preloaded, hypopg installed, the
+ * scripts as {@code docker compose}: pg_stat_statements and auto_explain preloaded, function
+ * tracking on, hypopg installed, the
  * {@code mcp_readonly} role and the demo shop schema seeded at 1% scale.
  */
 public final class DemoDatabase {
@@ -42,8 +43,9 @@ public final class DemoDatabase {
                     .withCopyFileToContainer(MountableFile.forHostPath("demo/schema.sql"), "/demo/schema.sql")
                     .withCopyFileToContainer(MountableFile.forHostPath("demo/seed.sql"), "/demo/seed.sql")
                     .withCommand("postgres",
-                            "-c", "shared_preload_libraries=pg_stat_statements",
+                            "-c", "shared_preload_libraries=pg_stat_statements,auto_explain",
                             "-c", "pg_stat_statements.track=all",
+                            "-c", "track_functions=all",
                             "-c", "fsync=off");
             pg.start();
             container = pg;
