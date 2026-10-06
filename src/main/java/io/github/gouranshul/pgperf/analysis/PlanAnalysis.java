@@ -43,7 +43,13 @@ public record PlanAnalysis(
         ROW_ESTIMATE_MISMATCH,
         SORT_SPILLED_TO_DISK,
         HASH_SPILLED_TO_DISK,
-        NESTED_LOOP_HIGH_LOOPS
+        NESTED_LOOP_HIGH_LOOPS,
+        /** A user-defined function accounts for most of a query's execution time. */
+        FUNCTION_DOMINATES_QUERY,
+        /** A function runs once per row, re-running every statement inside it. */
+        FUNCTION_CALLED_PER_ROW,
+        /** A function is declared VOLATILE (the default) but only read data in this run. */
+        VOLATILE_FUNCTION_ONLY_READS
     }
 
     /**
