@@ -136,7 +136,8 @@ Generate some slow-query statistics (optional, but makes `top_slow_queries` inte
 ```bash
 ./demo/workload.sh          # 60s of deliberately bad queries via pgbench
 ./demo/lock-scenario.sh     # holds a row lock for 2 minutes so blocking_sessions has something to show
-./demo/smoke-test.sh        # curl-based end-to-end check of health, auth and two tool calls```
+./demo/smoke-test.sh        # curl-based end-to-end check of health, auth and two tool calls
+```
 
 ### Connect from Claude Code
 
@@ -164,6 +165,40 @@ Claude Desktop launches stdio servers, so use the `mcp-remote` bridge
 }
 ```
 
+### Connect from Cursor
+
+`~/.cursor/mcp.json` (or `.cursor/mcp.json` in a project):
+
+```json
+{
+  "mcpServers": {
+    "pg-perf": {
+      "url": "http://localhost:8080/mcp",
+      "headers": { "Authorization": "Bearer <your MCP_API_KEY>" }
+    }
+  }
+}
+```
+
+### Connect from VS Code (Copilot agent mode)
+
+`.vscode/mcp.json`. VS Code prompts for the key once and stores it securely:
+
+```json
+{
+  "inputs": [
+    { "type": "promptString", "id": "pg-perf-key", "description": "pg-perf MCP_API_KEY", "password": true }
+  ],
+  "servers": {
+    "pg-perf": {
+      "type": "http",
+      "url": "http://localhost:8080/mcp",
+      "headers": { "Authorization": "Bearer ${input:pg-perf-key}" }
+    }
+  }
+}
+```
+
 ### Point it at your own database
 
 Create a role like `mcp_readonly` (see [`docker/init.sql`](docker/init.sql)), make sure
@@ -183,6 +218,25 @@ GRANT SET ON PARAMETER auto_explain.log_min_duration, auto_explain.log_analyze,
 ```
 
 Without these, `explain_function` still reports what it can and says in `notes` what is missing.
+
+Then run the published image; no clone or build needed. Put the settings in a file so secrets stay
+out of your shell history:
+
+```bash
+cat > pg-perf.env <<'EOF'
+PGPERF_DB_URL=jdbc:postgresql://host.docker.internal:5432/mydb
+PGPERF_DB_USER=mcp_readonly
+PGPERF_DB_PASSWORD=<the role's password>
+MCP_API_KEY=<32+ random characters>
+EOF
+```
+
+```bash
+docker run --rm --env-file pg-perf.env -p 127.0.0.1:8080:8080 ghcr.io/gouranshul/pg-perf-mcp:0.1.0
+```
+
+`host.docker.internal` reaches a database on your machine (Docker Desktop; on Linux add
+`--add-host=host.docker.internal:host-gateway`). Images are built for amd64 and arm64.
 
 ## Configuration
 
