@@ -21,13 +21,6 @@ and never creates the indexes it recommends.
 
 ## Demo
 
-![demo/tour.sh calling the server over MCP: slowest query, its plan, a validated index suggestion and a rejected write](docs/demo.gif)
-
-`demo/tour.sh` makes the same MCP calls an assistant would, against the demo stack with real
-numbers: the slowest statement, its plan, an index suggestion costed with hypopg, and a write
-attempt that the SQL guard rejects. (Recorded with [VHS](https://github.com/charmbracelet/vhs)
-from [docs/demo.tape](docs/demo.tape).)
-
 A condensed, illustrative session against the demo shop (`docker compose up`, then
 `./demo/workload.sh`). Exact numbers vary from run to run:
 
@@ -143,9 +136,7 @@ Generate some slow-query statistics (optional, but makes `top_slow_queries` inte
 ```bash
 ./demo/workload.sh          # 60s of deliberately bad queries via pgbench
 ./demo/lock-scenario.sh     # holds a row lock for 2 minutes so blocking_sessions has something to show
-./demo/smoke-test.sh        # curl-based end-to-end check of health, auth and two tool calls
-./demo/tour.sh              # the narrated walkthrough from the GIF above (needs curl and jq)
-```
+./demo/smoke-test.sh        # curl-based end-to-end check of health, auth and two tool calls```
 
 ### Connect from Claude Code
 
