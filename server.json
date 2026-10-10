@@ -1,0 +1,71 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.gouranshul/pg-perf-mcp",
+  "title": "PostgreSQL Performance (read-only)",
+  "description": "Read-only PostgreSQL performance diagnostics: slow queries, EXPLAIN, index advice, locks, functions",
+  "repository": {
+    "url": "https://github.com/gouranshul/pg-perf-mcp",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/gouranshul/pg-perf-mcp#readme",
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "oci",
+      "identifier": "ghcr.io/gouranshul/pg-perf-mcp:0.1.0",
+      "transport": {
+        "type": "streamable-http",
+        "url": "http://localhost:8080/mcp",
+        "headers": [
+          {
+            "name": "Authorization",
+            "description": "The same API key as MCP_API_KEY, sent as a bearer token",
+            "value": "Bearer {api_key}",
+            "isRequired": true,
+            "isSecret": true,
+            "variables": {
+              "api_key": {
+                "description": "The value you set for MCP_API_KEY",
+                "isRequired": true,
+                "isSecret": true
+              }
+            }
+          }
+        ]
+      },
+      "runtimeArguments": [
+        {
+          "type": "named",
+          "name": "-p",
+          "value": "127.0.0.1:8080:8080",
+          "description": "Publish the MCP endpoint on localhost only"
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "PGPERF_DB_URL",
+          "description": "JDBC URL of the database to diagnose. From inside the container, use host.docker.internal for a database on your machine, e.g. jdbc:postgresql://host.docker.internal:5432/mydb",
+          "isRequired": true
+        },
+        {
+          "name": "PGPERF_DB_USER",
+          "description": "A read-only role with pg_read_all_stats and pg_monitor (see docker/init.sql)",
+          "default": "mcp_readonly",
+          "isRequired": true
+        },
+        {
+          "name": "PGPERF_DB_PASSWORD",
+          "description": "Password of that role",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "MCP_API_KEY",
+          "description": "Bearer token clients must send, at least 16 characters (32+ random recommended)",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
