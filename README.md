@@ -9,6 +9,12 @@
 queries, EXPLAIN plans, index suggestions, table health and lock contention. It is read-only by
 design.
 
+![Claude Code using pg-perf-mcp: it finds the slow database functions, then diagnoses a slow catalog query and declines to create the index because the tools are read-only](docs/demo.gif)
+
+*A real Claude Code session against the demo shop, sped up. First it finds which database
+functions are slow and why. Then it explains a slow catalog query and estimates the fix with a
+hypothetical index. Asked to create the index, it says it can't: every tool is read-only.*
+
 ## Why
 
 When a page is slow, developers paste a query into a chat and ask "why is this slow?". The
