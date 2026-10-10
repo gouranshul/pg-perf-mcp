@@ -1,7 +1,9 @@
 # syntax=docker/dockerfile:1
 
 # ---- build stage --------------------------------------------------------------------------
-FROM eclipse-temurin:25-jdk-noble AS build
+# Runs on the build machine's own platform: the jar is platform-independent, so a multi-arch
+# image (amd64 + arm64) needs no emulated Maven build.
+FROM --platform=$BUILDPLATFORM eclipse-temurin:25-jdk-noble AS build
 WORKDIR /workspace
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
@@ -12,6 +14,8 @@ RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -q package -DskipTests \
 
 # ---- runtime stage ------------------------------------------------------------------------
 FROM eclipse-temurin:25-jre-noble
+# The MCP Registry verifies image ownership with this label; it must match the name in server.json.
+LABEL io.modelcontextprotocol.server.name="io.github.gouranshul/pg-perf-mcp"
 RUN groupadd --system --gid 10001 app && useradd --system --uid 10001 --gid app --no-create-home app
 WORKDIR /app
 COPY --from=build /workspace/target/extracted/dependencies/ ./

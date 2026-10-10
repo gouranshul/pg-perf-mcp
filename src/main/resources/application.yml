@@ -29,13 +29,14 @@ spring:
     mcp:
       server:
         name: pg-perf-mcp
-        version: 0.1.0
+        version: "@project.version@"  # from pom.xml at build time
         type: SYNC
         protocol: STREAMABLE
         instructions: >-
           Read-only PostgreSQL performance diagnostics. Start with top_slow_queries, then explain_query and
           suggest_indexes on the worst statement, and table_health / unused_indexes / blocking_sessions for
-          context. Nothing here can modify the database; index suggestions are text for a human to review.
+          context, and slow_functions / explain_function when slow statements call database functions. Nothing
+          here can modify the database; index suggestions are text for a human to review.
         capabilities:
           tool: true
           resource: true

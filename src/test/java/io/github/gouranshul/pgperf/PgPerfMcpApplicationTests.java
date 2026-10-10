@@ -48,6 +48,13 @@ class PgPerfMcpApplicationTests {
     }
 
     @Test
+    void reportsTheVersionFromThePom() {
+        // application.yml holds @project.version@, which Maven resource filtering must have replaced.
+        assertThat(client.getServerInfo().name()).isEqualTo("pg-perf-mcp");
+        assertThat(client.getServerInfo().version()).matches("\\d+\\.\\d+\\.\\d+(-SNAPSHOT)?");
+    }
+
+    @Test
     void exposesAllToolsAsReadOnly() {
         assertThat(client.listTools().tools()).extracting(Tool::name).containsExactlyInAnyOrder(
                 "top_slow_queries", "explain_query", "suggest_indexes", "unused_indexes", "table_health",

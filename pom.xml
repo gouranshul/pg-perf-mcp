@@ -11,7 +11,7 @@
 
 	<groupId>io.github.gouranshul</groupId>
 	<artifactId>pg-perf-mcp</artifactId>
-	<version>0.1.0-SNAPSHOT</version>
+	<version>0.1.0</version>
 	<name>pg-perf-mcp</name>
 	<description>MCP server that lets AI assistants safely diagnose PostgreSQL performance problems</description>
 	<url>https://github.com/gouranshul/pg-perf-mcp</url>
