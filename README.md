@@ -130,9 +130,55 @@ error messages with no stack traces or connection details, and metrics `mcp.tool
 
 ## Quickstart
 
-Requirements: Docker. (To build and test from source you also need Java 25.)
+Requirements: Docker. There are two ways to start:
+
+- **[Use it on your database](#use-it-on-your-database)**: pull the published image. No clone or build.
+- **[Try the demo shop](#try-the-demo-shop)**: clone the repo and get a seeded database with
+  realistic problems to diagnose.
+
+Either way, finish with [connecting your AI client](#connect-from-claude-code).
+
+### Use it on your database
+
+**1. Pull the image** (public on GHCR, built for amd64 and arm64):
 
 ```bash
+docker pull ghcr.io/gouranshul/pg-perf-mcp:0.1.0
+```
+
+**2. Prepare the database (once).** Create a read-only role like `mcp_readonly` (see
+[`docker/init.sql`](docker/init.sql)) and make sure `pg_stat_statements` is in
+`shared_preload_libraries`. Prefer a replica or staging database: `analyze=true` and
+`explain_function` execute the query. For the function tools, also
+[enable function tracking](#enable-the-function-tools-optional).
+
+**3. Run it.** Put the settings in a file so secrets stay out of your shell history:
+
+```bash
+cat > pg-perf.env <<'EOF'
+PGPERF_DB_URL=jdbc:postgresql://host.docker.internal:5432/mydb
+PGPERF_DB_USER=mcp_readonly
+PGPERF_DB_PASSWORD=<the role's password>
+MCP_API_KEY=<32+ random characters>
+EOF
+```
+
+```bash
+docker run --rm --env-file pg-perf.env -p 127.0.0.1:8080:8080 ghcr.io/gouranshul/pg-perf-mcp:0.1.0
+```
+
+`host.docker.internal` reaches a database on your machine (Docker Desktop; on Linux add
+`--add-host=host.docker.internal:host-gateway`). The MCP endpoint is now
+`http://localhost:8080/mcp`.
+
+**4. Connect your AI client:** see below.
+
+### Try the demo shop
+
+To build and test from source you also need Java 25.
+
+```bash
+git clone https://github.com/gouranshul/pg-perf-mcp && cd pg-perf-mcp
 cp .env.example .env        # then replace the placeholder secrets
 docker compose up --build   # Postgres 18 + seeded demo shop (~4.5M rows) + the MCP server on :8080
 ```
@@ -149,6 +195,13 @@ Generate some slow-query statistics (optional, but makes `top_slow_queries` inte
 
 ```bash
 claude mcp add --transport http pg-perf http://localhost:8080/mcp --header "Authorization: Bearer $MCP_API_KEY"
+```
+
+In PowerShell, set the key first, or the header goes out empty and the server answers 401:
+
+```powershell
+$env:MCP_API_KEY = "<your MCP_API_KEY>"
+claude mcp add --transport http pg-perf http://localhost:8080/mcp --header "Authorization: Bearer $env:MCP_API_KEY"
 ```
 
 Then ask: *"Use pg-perf to find out why the shop database is slow"*, or run the
@@ -205,13 +258,10 @@ Claude Desktop launches stdio servers, so use the `mcp-remote` bridge
 }
 ```
 
-### Point it at your own database
+### Enable the function tools (optional)
 
-Create a role like `mcp_readonly` (see [`docker/init.sql`](docker/init.sql)), make sure
-`pg_stat_statements` is in `shared_preload_libraries`, and set the variables below. Prefer a
-replica or staging database: `analyze=true` and `explain_function` execute queries.
-
-For the function tools (optional; everything else works without them):
+`slow_functions` and `explain_function` need two extra settings on your own database. The demo
+shop already has them, and every other tool works without them:
 
 ```sql
 -- postgresql.conf: track_functions = 'pl' (or 'all' to include SQL functions), then reload.
@@ -224,25 +274,6 @@ GRANT SET ON PARAMETER auto_explain.log_min_duration, auto_explain.log_analyze,
 ```
 
 Without these, `explain_function` still reports what it can and says in `notes` what is missing.
-
-Then run the published image; no clone or build needed. Put the settings in a file so secrets stay
-out of your shell history:
-
-```bash
-cat > pg-perf.env <<'EOF'
-PGPERF_DB_URL=jdbc:postgresql://host.docker.internal:5432/mydb
-PGPERF_DB_USER=mcp_readonly
-PGPERF_DB_PASSWORD=<the role's password>
-MCP_API_KEY=<32+ random characters>
-EOF
-```
-
-```bash
-docker run --rm --env-file pg-perf.env -p 127.0.0.1:8080:8080 ghcr.io/gouranshul/pg-perf-mcp:0.1.0
-```
-
-`host.docker.internal` reaches a database on your machine (Docker Desktop; on Linux add
-`--add-host=host.docker.internal:host-gateway`). Images are built for amd64 and arm64.
 
 ## Configuration
 
