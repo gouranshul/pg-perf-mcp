@@ -21,3 +21,12 @@ Thanks for your interest! Issues and pull requests are welcome.
 - Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `test:`,
   `docs:`, `ci:`, `chore:`) and keep commits small.
 - New dependency versions must be verified against Maven Central or official docs.
+
+## Releasing
+
+1. Set the same version `X.Y.Z` in `pom.xml` and in `server.json` (`version` and the image tag in
+   `packages[0].identifier`). The MCP server reports the pom version.
+2. Commit, then `git tag vX.Y.Z && git push origin vX.Y.Z`. The Release workflow checks the three
+   versions agree, runs `./mvnw verify`, pushes `ghcr.io/gouranshul/pg-perf-mcp:X.Y.Z` (amd64 and
+   arm64) and creates the GitHub release.
+3. Publish the new version to the MCP Registry: `mcp-publisher login github && mcp-publisher publish`.
