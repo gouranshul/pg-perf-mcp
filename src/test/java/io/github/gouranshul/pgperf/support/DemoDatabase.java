@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.UUID;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -18,7 +19,8 @@ import org.testcontainers.utility.MountableFile;
 public final class DemoDatabase {
 
     public static final String READONLY_USER = "mcp_readonly";
-    public static final String READONLY_PASSWORD = "test-only-readonly-password";
+    /** Random per run, like the integration-test API key, so no credential lives in the source. */
+    public static final String READONLY_PASSWORD = UUID.randomUUID().toString();
 
     private static PostgreSQLContainer container;
 
