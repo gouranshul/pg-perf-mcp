@@ -1,0 +1,38 @@
+{
+  "name": "pg-perf",
+  "displayName": "PostgreSQL Performance (read-only)",
+  "version": "0.1.0",
+  "description": "Read-only PostgreSQL performance diagnostics over MCP: slow queries, EXPLAIN summaries, index advice, table health, locks and slow database functions. Connects to a running pg-perf-mcp server.",
+  "author": {
+    "name": "Anshul Gour",
+    "url": "https://github.com/gouranshul"
+  },
+  "homepage": "https://github.com/gouranshul/pg-perf-mcp#readme",
+  "repository": "https://github.com/gouranshul/pg-perf-mcp",
+  "license": "MIT",
+  "keywords": ["postgresql", "performance", "explain", "pg_stat_statements", "mcp", "read-only"],
+  "userConfig": {
+    "mcp_url": {
+      "type": "string",
+      "title": "pg-perf-mcp endpoint",
+      "description": "URL of the running server's MCP endpoint",
+      "default": "http://localhost:8080/mcp"
+    },
+    "api_key": {
+      "type": "string",
+      "title": "API key",
+      "description": "The value of MCP_API_KEY the server was started with",
+      "required": true,
+      "sensitive": true
+    }
+  },
+  "mcpServers": {
+    "pg-perf": {
+      "type": "http",
+      "url": "${user_config.mcp_url}",
+      "headers": {
+        "Authorization": "Bearer ${user_config.api_key}"
+      }
+    }
+  }
+}

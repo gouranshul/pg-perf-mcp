@@ -1,0 +1,14 @@
+{
+  "name": "pg-perf-mcp",
+  "description": "Read-only PostgreSQL performance diagnostics for Claude Code",
+  "owner": {
+    "name": "Anshul Gour"
+  },
+  "plugins": [
+    {
+      "name": "pg-perf",
+      "source": "./",
+      "description": "Connects Claude Code to a running pg-perf-mcp server"
+    }
+  ]
+}
