@@ -204,6 +204,16 @@ $env:MCP_API_KEY = "<your MCP_API_KEY>"
 claude mcp add --transport http pg-perf http://localhost:8080/mcp --header "Authorization: Bearer $env:MCP_API_KEY"
 ```
 
+Or install it as a Claude Code plugin. Claude Code asks for the endpoint (default
+`http://localhost:8080/mcp`) and your `MCP_API_KEY`, which it keeps in secure storage:
+
+```text
+/plugin install pg-perf --marketplace gouranshul/pg-perf-mcp
+```
+
+On Claude Code versions before 2.1.275, add the marketplace first:
+`/plugin marketplace add gouranshul/pg-perf-mcp`, then `/plugin install pg-perf@pg-perf-mcp`.
+
 Then ask: *"Use pg-perf to find out why the shop database is slow"*, or run the
 `diagnose_slow_database` prompt.
 
