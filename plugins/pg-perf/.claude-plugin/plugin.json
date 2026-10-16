@@ -10,6 +10,8 @@
   "homepage": "https://github.com/gouranshul/pg-perf-mcp#readme",
   "repository": "https://github.com/gouranshul/pg-perf-mcp",
   "license": "MIT",
+  "icon": "./.claude-plugin/icon.png",
+  "privacyPolicyUrl": "https://github.com/gouranshul/pg-perf-mcp/blob/main/PRIVACY.md",
   "keywords": ["postgresql", "performance", "explain", "pg_stat_statements", "mcp", "read-only"],
   "userConfig": {
     "mcp_url": {
