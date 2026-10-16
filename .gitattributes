@@ -1,5 +1,8 @@
-* text=auto eol=lf
-*.cmd text eol=crlf
+# No attribute here may rewrite file contents (text, eol, filter, export-*). Anthropic's plugin
+# directory refuses to validate a repository whose exported archive differs from its committed
+# files. Files are stored exactly as committed: LF everywhere except *.cmd, which keeps the CRLF
+# that cmd.exe needs. CI checks that no other file contains CRLF.
+*.cmd -text
 *.jar binary
 *.png binary
 *.gif binary
