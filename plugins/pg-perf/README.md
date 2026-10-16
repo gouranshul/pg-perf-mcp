@@ -31,6 +31,12 @@ When you enable the plugin, Claude Code asks for two values:
 - **pg-perf-mcp endpoint**: the URL of your server's MCP endpoint, `http://localhost:8080/mcp` by default
 - **API key**: the `MCP_API_KEY` your server was started with. Claude Code keeps it in secure storage.
 
+At install, Claude Code warns that the plugin's MCP server is not a registered directory connector.
+That is expected: a connector is one server at a fixed public address, while pg-perf-mcp runs on
+your own infrastructure next to your database, usually on `localhost`, so there is no shared
+address to register. The server it connects to is the one you enter above, and it authenticates
+with your API key.
+
 ## What it connects to and sends
 
 The plugin declares one MCP server and nothing else: no hooks, scripts, skills, or commands.
