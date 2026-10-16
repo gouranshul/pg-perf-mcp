@@ -36,7 +36,9 @@ When you enable the plugin, Claude Code asks for two values:
 The plugin declares one MCP server and nothing else: no hooks, scripts, skills, or commands.
 Claude Code connects only to the endpoint you enter, sends your API key in the `Authorization`
 header, and sends the tool calls Claude makes (for example the SQL to explain). Nothing is sent
-anywhere else, and the plugin does not read credentials from your environment.
+anywhere else, and the plugin does not read credentials from your environment. The
+[privacy policy](https://github.com/gouranshul/pg-perf-mcp/blob/main/PRIVACY.md) covers the
+plugin and the server, including what reaches Anthropic as part of your conversation.
 
 The MCP server is configured from your own values, so the plugin works in Claude Code. Chat and
 Cowork on claude.ai skip it, because they cannot reach a server on your machine.
