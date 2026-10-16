@@ -1,7 +1,7 @@
 name: Release
 
 # Push a tag like v0.1.0 to publish ghcr.io/gouranshul/pg-perf-mcp (amd64 + arm64) and a GitHub
-# release. The tag, pom.xml, server.json and .claude-plugin/plugin.json must carry the same version.
+# release. The tag, pom.xml, server.json and plugins/pg-perf/.claude-plugin/plugin.json must carry the same version.
 on:
   push:
     tags: ["v*.*.*"]
@@ -31,7 +31,7 @@ jobs:
           pom="$(./mvnw -B -q help:evaluate -Dexpression=project.version -DforceStdout)"
           server="$(jq -r .version server.json)"
           image="$(jq -r '.packages[0].identifier' server.json)"
-          plugin="$(jq -r .version .claude-plugin/plugin.json)"
+          plugin="$(jq -r .version plugins/pg-perf/.claude-plugin/plugin.json)"
           echo "tag=$tag pom=$pom server.json=$server image=$image plugin.json=$plugin"
           [[ "$pom" == "$tag" && "$server" == "$tag" && "$plugin" == "$tag" \
              && "$image" == "ghcr.io/${GITHUB_REPOSITORY}:$tag" ]] \

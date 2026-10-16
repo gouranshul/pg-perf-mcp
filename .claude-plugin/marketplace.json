@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "pg-perf",
-      "source": "./",
+      "source": "./plugins/pg-perf",
       "description": "Connects Claude Code to a running pg-perf-mcp server"
     }
   ]
