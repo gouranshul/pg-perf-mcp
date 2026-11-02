@@ -28,7 +28,7 @@
 		<!-- Versions verified on Maven Central; everything else is managed by the Spring Boot BOM. -->
 		<spring-ai.version>2.0.1</spring-ai.version>
 		<jsqlparser.version>5.4</jsqlparser.version>
-		<jacoco.version>0.8.15</jacoco.version>
+		<jacoco.version>0.8.16</jacoco.version>
 	</properties>
 
 	<dependencyManagement>
